@@ -19,7 +19,7 @@ app.set("trust proxy", 1);
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "http://localhost:5500";
 app.use(cors({ origin: FRONTEND_ORIGIN, credentials: true }));
 
-app.use(express.static("public"));
+app.use(express.static("docs"));
 app.use(session({
   secret: process.env.SESSION_SECRET || "please_change_this_in_prod",
   resave: false,
@@ -101,10 +101,10 @@ app.get("/:page", (req, res) => {
   const allowedPages = ["auth.html", "budget_plan.html"];
   
   if (allowedPages.includes(page)) {
-    res.sendFile(path.join(__dirname, "public", page));
+    res.sendFile(path.join(__dirname, "docs", page));
   } else {
     // fallback to auth.html for unknown routes
-    res.sendFile(path.join(__dirname, "public", "auth.html"));
+    res.sendFile(path.join(__dirname, "docs", "auth.html"));
   }
 });
 
