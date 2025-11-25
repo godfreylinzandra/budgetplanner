@@ -2,6 +2,7 @@ import express from "express";
 import session from "express-session";
 import dotenv from "dotenv";
 import pkg from "pg";
+import cors from "cors";
 import authRoutes from "./routes/auth.js";
 import budgetRoutes from "./routes/budget_plan.js"; // router contains both budget & transactions
 
@@ -11,21 +12,41 @@ const { Pool } = pkg;
 const app = express();
 
 app.use(express.json());
+// Trust proxy so secure cookies work when behind Render's proxy
+app.set("trust proxy", 1);
+
+// CORS - allow the frontend origin (set FRONTEND_ORIGIN in Render environment variables)
+const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "http://localhost:5500";
+app.use(cors({ origin: FRONTEND_ORIGIN, credentials: true }));
+
 app.use(express.static("public"));
 app.use(session({
-  secret: process.env.SESSION_SECRET,
+  secret: process.env.SESSION_SECRET || "please_change_this_in_prod",
   resave: false,
   saveUninitialized: false,
+  cookie: {
+    // in production (HTTPS) we want secure cookies and cross-site cookies to be allowed
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  }
 }));
 
 // PostgreSQL Pool
-const db = new Pool({
+// Build DB config and support optional SSL (Render Postgres requires TLS)
+const dbConfig = {
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   host: process.env.DB_HOST,
   port: process.env.DB_PORT,
   database: process.env.DB_DATABASE,
-});
+};
+
+if (process.env.DB_SSL && String(process.env.DB_SSL).toLowerCase() === "true") {
+  // allow self-signed certs when connecting to hosted providers that require TLS
+  dbConfig.ssl = { rejectUnauthorized: false };
+}
+
+const db = new Pool(dbConfig);
 
 // Test database connection
 db.connect((err, client, release) => {

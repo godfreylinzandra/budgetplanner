@@ -59,7 +59,7 @@ window.onload = async function () {
   // -------------------------------
   async function loadUser() {
     try {
-      const res = await fetch("/api/session");
+      const res = await fetch("/api/session", { credentials: "include" });
       if (res.status === 401) return window.location.href = "/index.html";
       const data = await res.json();
       userEmailUI.textContent = " " + data.email;
@@ -72,7 +72,7 @@ window.onload = async function () {
   userId = await loadUser();
 
   logoutBtn.addEventListener("click", async () => {
-    await fetch("/api/logout", { method: "POST" });
+    await fetch("/api/logout", { method: "POST", credentials: "include" });
     window.location.href = "/index.html";
   });
 
@@ -81,7 +81,7 @@ window.onload = async function () {
   // -------------------------------
   async function loadBudget() {
     try {
-      const res = await fetch("/api/budget");
+      const res = await fetch("/api/budget", { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch budget");
       budget = await res.json();
       updateBudgetDisplay();
@@ -95,7 +95,7 @@ window.onload = async function () {
 
   async function loadTransactions() {
     try {
-      const res = await fetch("/api/transactions");
+      const res = await fetch("/api/transactions", { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch transactions");
       transactions = await res.json();
       renderTransactions();
@@ -160,6 +160,7 @@ window.onload = async function () {
       const res = await fetch("/api/budget", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(budget)
       });
       if (!res.ok) throw new Error("Failed to save budget");
@@ -191,6 +192,7 @@ transactionForm.addEventListener("submit", async (e) => {
     const res = await fetch("/api/transactions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify(transactionData)
     });
     if (!res.ok) throw new Error("Failed to save transaction");

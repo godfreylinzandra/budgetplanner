@@ -68,9 +68,13 @@ registerForm.addEventListener("submit", async (e) => {
   }
 
   try {
-    const res = await fetch("http://localhost:3000/auth/register", {
+    // Use relative path so requests work when frontend and backend are served from the same origin
+    // (e.g. when deployed together on Render). Avoid hard-coded localhost which breaks in production.
+    const res = await fetch("/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      // include credentials so cookies (session) are set when frontend is on a different origin
+      credentials: "include",
       body: JSON.stringify({ name, email, address, password })
     });
 
@@ -101,9 +105,12 @@ loginForm.addEventListener("submit", async (e) => {
   }
 
   try {
-    const res = await fetch("http://localhost:3000/auth/login", {
+    // Use relative path for the same reason as above.
+    const res = await fetch("/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      // include credentials so server can set session cookie
+      credentials: "include",
       body: JSON.stringify({ email, password })
     });
 
