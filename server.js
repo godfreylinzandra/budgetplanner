@@ -81,14 +81,14 @@ app.use("/auth", authRoutes);
 app.use("/api", budgetRoutes);
 
 // --------------------------
-// Serve Frontend
+// Serve Frontend (docs/)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, "docs")));
 
 // Root route
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "auth.html"));
+  res.sendFile(path.join(__dirname, "docs", "auth.html"));
 });
 
 // Named pages
@@ -96,8 +96,13 @@ app.get("/:page", (req, res) => {
   const page = req.params.page;
   const allowed = ["auth.html", "budget_plan.html"];
   res.sendFile(
-    path.join(__dirname, "public", allowed.includes(page) ? page : "auth.html")
+    path.join(__dirname, "docs", allowed.includes(page) ? page : "auth.html")
   );
+});
+
+// Catch-all for any other route (optional, prevents 404)
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "docs", "auth.html"));
 });
 
 // --------------------------
