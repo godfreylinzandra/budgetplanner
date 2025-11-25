@@ -12,34 +12,43 @@ dotenv.config();
 const { Pool } = pkg;
 
 const app = express();
-app.set("trust proxy", 1); // for secure cookies behind proxy
+
+// Needed for secure cookies on Render
+app.set("trust proxy", 1);
 
 app.use(express.json());
 
 // --------------------------
-// CORS (GitHub Pages frontend)
+// CORS (GitHub Pages origin)
+// --------------------------
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "https://godfreylinzandra.github.io";
-app.use(cors({
-  origin: FRONTEND_ORIGIN,
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: FRONTEND_ORIGIN,
+    credentials: true,
+  })
+);
 
 // --------------------------
 // Sessions
-app.use(session({
-  secret: process.env.SESSION_SECRET || "change_me",
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: true,       // Must be HTTPS in production
-    sameSite: "none",   // Required for cross-origin cookies
-    httpOnly: true,
-    maxAge: 7 * 24 * 60 * 60 * 1000 // 1 week
-  }
-}));
+// --------------------------
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "change_me",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: true, // always true for cross-origin cookies
+      sameSite: "none", // always none for cross-origin cookies
+      httpOnly: true,
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 1 week
+    },
+  })
+);
 
 // --------------------------
-// PostgreSQL connection
+// PostgreSQL Connection
+// --------------------------
 const dbConfig = {
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
@@ -48,39 +57,54 @@ const dbConfig = {
   database: process.env.DB_DATABASE,
 };
 
-if ((process.env.DB_SSL || "").toLowerCase() === "true") {
+if (String(process.env.DB_SSL).toLowerCase() === "true") {
   dbConfig.ssl = { rejectUnauthorized: false };
 }
 
 const db = new Pool(dbConfig);
 
-// Test DB
+// test DB
 db.connect((err, client, release) => {
-  if (err) console.error("❌ DB error:", err.message);
-  else { console.log("✅ Database connected successfully"); release(); }
+  if (err) {
+    console.error("❌ DB error:", err.message);
+  } else {
+    console.log("✅ Database connected successfully");
+    release();
+  }
 });
 
-// Make DB available in routes
-app.use((req, res, next) => { req.db = db; next(); });
+// make DB available for routes
+app.use((req, res, next) => {
+  req.db = db;
+  next();
+});
 
 // --------------------------
 // API Routes
+// --------------------------
 app.use("/auth", authRoutes);
 app.use("/api", budgetRoutes);
 
 // --------------------------
-// Serve frontend
+// Serve Frontend (public/)
+// --------------------------
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
 app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/:page", (req, res) => {
   const page = req.params.page;
   const allowed = ["auth.html", "budget_plan.html"];
-  res.sendFile(path.join(__dirname, "public", allowed.includes(page) ? page : "auth.html"));
+  res.sendFile(
+    path.join(__dirname, "public", allowed.includes(page) ? page : "auth.html")
+  );
 });
 
 // --------------------------
-// Start server
+// Start Server
+// --------------------------
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
+app.listen(PORT, () =>
+  console.log(`Server running at http://localhost:${PORT}`)
+);
