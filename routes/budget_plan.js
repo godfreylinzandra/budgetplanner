@@ -10,7 +10,7 @@ router.get("/budget", async (req, res) => {
 
   try {
     const result = await req.db.query(
-      "SELECT * FROM budgets WHERE user_id=$1",
+      "SELECT * FROM budget WHERE user_id=$1",
       [req.session.userId]
     );
     res.json(result.rows[0] || { amount: 0, type: "Monthly" });
@@ -34,7 +34,7 @@ router.post("/budget", async (req, res) => {
 
   try {
     await req.db.query(
-      `INSERT INTO budgets(user_id, amount, type)
+      `INSERT INTO budget(user_id, amount, type)
        VALUES($1, $2, $3)
        ON CONFLICT (user_id) DO UPDATE SET amount=$2, type=$3`,
       [req.session.userId, amount, type]
