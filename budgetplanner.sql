@@ -1,1 +1,4 @@
-select * from users
+
+
+ALTER TABLE transactions
+ALTER COLUMN type SET DEFAULT 'Expense';
